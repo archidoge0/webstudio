@@ -1,0 +1,57 @@
+name: GHAV Webstudio 1988 Storybook core
+on:
+  push:
+    branches:
+      - codex/ghav-webstudio1988-*
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  design-system:
+    runs-on: macos-14-arm64
+    timeout-minutes: 35
+    env:
+      DATABASE_URL: postgres://
+      AUTH_SECRET: test
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: 36b5c5facbdd75eb1b8ccb2691a08d732a41ded1
+      - uses: ./.github/actions/ci-setup
+      - name: Build Storybook for design-system
+        run: pnpm turbo run storybook:build --filter=@webstudio-is/design-system
+      - name: Observe Storybook bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          bundle=packages/design-system/storybook-static
+          test -s "$bundle/index.html"
+          count=$(find "$bundle" -type f | wc -l | tr -d ' ')
+          test "$count" -gt 10
+          echo "GHAV_BUNDLE_FILE_COUNT=$count"
+          find "$bundle" -type f -print0 | xargs -0 shasum -a 256 | LC_ALL=C sort | shasum -a 256 | sed 's/^/GHAV_BUNDLE_TREE_SHA256=/'
+  builder:
+    runs-on: macos-14-arm64
+    timeout-minutes: 35
+    env:
+      DATABASE_URL: postgres://
+      AUTH_SECRET: test
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: 36b5c5facbdd75eb1b8ccb2691a08d732a41ded1
+      - uses: ./.github/actions/ci-setup
+      - name: Build Storybook for builder
+        run: pnpm turbo run storybook:build --filter=@webstudio-is/builder
+      - name: Observe Storybook bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          bundle=apps/builder/storybook-static
+          test -s "$bundle/index.html"
+          count=$(find "$bundle" -type f | wc -l | tr -d ' ')
+          test "$count" -gt 10
+          echo "GHAV_BUNDLE_FILE_COUNT=$count"
+          find "$bundle" -type f -print0 | xargs -0 shasum -a 256 | LC_ALL=C sort | shasum -a 256 | sed 's/^/GHAV_BUNDLE_TREE_SHA256=/'
