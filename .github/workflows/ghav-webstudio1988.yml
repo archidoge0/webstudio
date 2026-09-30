@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   design-system:
-    runs-on: macos-14-arm64
+    runs-on: macos-14
     timeout-minutes: 35
     env:
       DATABASE_URL: postgres://
@@ -33,7 +33,7 @@ jobs:
           echo "GHAV_BUNDLE_FILE_COUNT=$count"
           find "$bundle" -type f -print0 | xargs -0 shasum -a 256 | LC_ALL=C sort | shasum -a 256 | sed 's/^/GHAV_BUNDLE_TREE_SHA256=/'
   builder:
-    runs-on: macos-14-arm64
+    runs-on: macos-14
     timeout-minutes: 35
     env:
       DATABASE_URL: postgres://
